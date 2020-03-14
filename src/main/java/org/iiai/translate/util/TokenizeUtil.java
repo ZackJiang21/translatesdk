@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,24 +35,24 @@ public class TokenizeUtil {
         BufferedReader reader = null;
         try {
             process = Runtime.getRuntime().exec(new String[]{"python", "-c", SCRIPT, sentence});
-            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
             String line;
             while ((line = reader.readLine()) != null) {
                 result.add(line);
             }
             process.waitFor();
         } catch (IOException e) {
-            LOGGER.error("IOException during exec tokenization, {}", e);
+            LOGGER.error("IOException during exec tokenization.", e);
             throw new TranslatorException(ErrorCode.INTERNAL_ERROR, e);
         } catch (InterruptedException e) {
-            LOGGER.error("Interrupted during exec tokenization, {}", e);
+            LOGGER.error("Interrupted during exec tokenization.", e);
             throw new TranslatorException(ErrorCode.INTERNAL_ERROR, e);
         } finally {
             if (reader != null) {
                 try {
                     reader.close();
                 } catch (IOException e) {
-                    LOGGER.error("IOException during close reade, {}", e);
+                    LOGGER.error("IOException during close reade.", e);
                 }
             }
             if (process != null) {
