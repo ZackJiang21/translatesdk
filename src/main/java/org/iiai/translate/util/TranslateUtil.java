@@ -1,6 +1,8 @@
 package org.iiai.translate.util;
 
 import com.alibaba.fastjson.JSON;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -9,17 +11,16 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.iiai.translate.constant.ErrorCode;
 import org.iiai.translate.constant.SentenceType;
+import org.iiai.translate.constant.TranslateConst;
 import org.iiai.translate.exception.TranslatorException;
-import org.iiai.translate.model.Document;
-import org.iiai.translate.model.RequestData;
-import org.iiai.translate.model.ResponseData;
-import org.iiai.translate.model.Sentence;
+import org.iiai.translate.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -38,24 +39,27 @@ public class TranslateUtil {
 
     public static String getTranslation(Document document, String modelId, String url) {
         List<Sentence> transSentences = document.getSentenceByType(SentenceType.SENTENCE);
-        List<List<Sentence>> batchList = getBatchList(transSentences);
-        List<String> transList = asyncGetTranslation(batchList, modelId, url);
+        List<BatchSentence> batchSentenceList = getModelBatchList(modelId, transSentences);
+        List<String> transList = asyncGetTranslation(batchSentenceList, modelId, url);
         return document.getTranslation(transList);
     }
 
-    private static List<String> asyncGetTranslation(List<List<Sentence>> batchList, String modelId, String url) {
-        int batchSize = batchList.size();
+    private static List<String> asyncGetTranslation(List<BatchSentence> batchSentenceList, String modelId, String url) {
 
+        List<List<RequestData>> batchRequest = new ArrayList<>();
+        batchSentenceList.forEach(batchSentence -> batchRequest.addAll(batchSentence.getRequestBatch()));
+
+        int batchSize = batchRequest.size();
         CountDownLatch countDownLatch = new CountDownLatch(batchSize);
         List<List<ResponseData>> batchResult = getInitList(batchSize);
         LOGGER.info("Translate batch size: {}", batchSize);
 
         try {
             for (int i = 0; i < batchSize; i++) {
-                List<Sentence> sentenceList = batchList.get(i);
+                List<RequestData> requestData = batchRequest.get(i);
                 final int index = i;
                 executor.submit(() -> {
-                    sendRequest(sentenceList, modelId, url, index, batchResult);
+                    sendRequest(requestData, url, index, batchResult);
                     countDownLatch.countDown();
                 });
             }
@@ -65,33 +69,80 @@ public class TranslateUtil {
             throw new TranslatorException(ErrorCode.INTERNAL_ERROR);
         }
 
-        List<String> result = batchResult.stream()
-                .flatMap(batchData -> batchData.stream())
-                .map(responseData -> responseData.getTgt())
-                .collect(Collectors.toList());
-
-        return result;
+        return getTransList(modelId, batchResult);
     }
 
-    private static void sendRequest(List<Sentence> sentenceList, String modelId, String url, int idx, List<List<ResponseData>> batchResult) {
+    private static List<String> getTransList(String modelId, List<List<ResponseData>> batchResult) {
+        if (!TranslateConst.AR2EN_ID.equals(modelId)) {
+            return batchResult.stream()
+                    .flatMap(batchData -> batchData.stream())
+                    .map(responseData -> responseData.getTgt())
+                    .collect(Collectors.toList());
+        }
+        // Seeing as ar2en using 2 models, here need to merge the result
+        List<String> transList = new ArrayList<>();
+
+        List<List<ResponseData>> mergedResponse = new ArrayList<>();
+        List<List<ResponseData>> casedResponseList = batchResult.subList(0, batchResult.size() / 2);
+        List<List<ResponseData>> uncasedResponseList = batchResult.subList(batchResult.size() / 2, batchResult.size());
+        for (int i = 0; i < casedResponseList.size(); i++) {
+            List<ResponseData> casedBatch = casedResponseList.get(i);
+            List<ResponseData> uncasedBatch = uncasedResponseList.get(i);
+            for (int j = 0; j < casedBatch.size(); j++) {
+                String casedResp = casedBatch.get(j).getTgt();
+                String uncasedResp = uncasedBatch.get(j).getTgt();
+                transList.add(getAr2EnTrans(casedResp, uncasedResp));
+            }
+        }
+        return transList;
+    }
+
+    private static String getAr2EnTrans(String casedResp, String uncasedResp) {
+        List<String> casedTokens = Arrays.asList(casedResp.split(" "));
+        List<String> uncasedTokens = Arrays.asList(uncasedResp.split(" "));
+
+        int uncasedTokenSize = uncasedTokens.size();
+        int lastMatch = -1;
+        for (int c = 1; c < casedTokens.size(); c++) {
+            String casedToken = casedTokens.get(c);
+            if (StringUtils.isAllLowerCase(casedToken)) {
+                continue;
+            }
+            int j = lastMatch + 1;
+            while (j < uncasedTokenSize) {
+                String uncasedToken = uncasedTokens.get(j);
+                if (StringUtils.isAllLowerCase(uncasedToken) && casedToken.toLowerCase().equals(uncasedToken)) {
+                    LOGGER.info("Replace cased token: {}", casedToken);
+                    uncasedTokens.set(j, casedToken);
+                    lastMatch = j;
+                    break;
+                }
+                j++;
+            }
+        }
+        return String.join(" ", uncasedTokens);
+    }
+
+    private static void sendRequest(List<RequestData> batchRequest, String url, int idx, List<List<ResponseData>> batchResult) {
         HttpPost request = new HttpPost(url);
-
-
-        List<RequestData> payLoad = new ArrayList<>();
-        sentenceList.forEach(sentence -> payLoad.add(new RequestData(modelId, sentence.getSentContent())));
-        request.setEntity(new StringEntity(JSON.toJSONString(payLoad), StandardCharsets.UTF_8));
+        request.setEntity(new StringEntity(JSON.toJSONString(batchRequest), StandardCharsets.UTF_8));
 
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             LOGGER.info("Batch {} get result", idx);
             String result = EntityUtils.toString(response.getEntity());
+            if (HttpStatus.SC_OK != response.getStatusLine().getStatusCode()) {
+                LOGGER.error("Get result error: {}", response.getStatusLine().getStatusCode());
+                LOGGER.error("Response: {}", result);
+                throw new TranslatorException(ErrorCode.API_ERROR);
+            }
             List<ResponseData> responseData = JSON.parseArray(result, ResponseData.class);
             batchResult.set(idx, responseData);
         } catch (IOException e) {
             LOGGER.error("IOException during send request to server. ", e);
             throw new TranslatorException(ErrorCode.INTERNAL_ERROR);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             LOGGER.error("Exception", e);
+            throw new TranslatorException(ErrorCode.INTERNAL_ERROR);
         }
 
     }
@@ -102,6 +153,19 @@ public class TranslateUtil {
             result.add(null);
         }
         return Collections.synchronizedList(result);
+    }
+
+    private static List<BatchSentence> getModelBatchList(String modelId, List<Sentence> sentenceList) {
+        List<BatchSentence> batchSentenceList = new ArrayList<>();
+        // If ar2en, use 2 models ar2en_cased, ar2en_uncased
+        List<List<Sentence>> batchList = getBatchList(sentenceList);
+        if (TranslateConst.AR2EN_ID.equals(modelId)) {
+            batchSentenceList.add(new BatchSentence(TranslateConst.AR2EN_CASED, batchList));
+            batchSentenceList.add(new BatchSentence(TranslateConst.AR2EN_UNCASED, batchList));
+        } else {
+            batchSentenceList.add(new BatchSentence(modelId, batchList));
+        }
+        return batchSentenceList;
     }
 
     private static List<List<Sentence>> getBatchList(List<Sentence> sentenceList) {
