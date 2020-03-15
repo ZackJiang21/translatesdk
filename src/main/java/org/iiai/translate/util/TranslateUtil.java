@@ -82,7 +82,6 @@ public class TranslateUtil {
         // Seeing as ar2en using 2 models, here need to merge the result
         List<String> transList = new ArrayList<>();
 
-        List<List<ResponseData>> mergedResponse = new ArrayList<>();
         List<List<ResponseData>> casedResponseList = batchResult.subList(0, batchResult.size() / 2);
         List<List<ResponseData>> uncasedResponseList = batchResult.subList(batchResult.size() / 2, batchResult.size());
         for (int i = 0; i < casedResponseList.size(); i++) {
