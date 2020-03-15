@@ -28,6 +28,10 @@ public class TokenizeUtil {
                     "print(sent)\n\t" +
                 "sys.exit(0)";
 
+    private TokenizeUtil() {
+
+    }
+
     public static List<String> getTokenizedSents(String sentence) {
         List<String> result = new ArrayList<>();
 

@@ -8,6 +8,10 @@ import java.util.Comparator;
 import java.util.List;
 
 public class SentenceUtil {
+    private SentenceUtil() {
+
+    }
+
     public static List<Separator> mergeSeparator(List<Separator> separators, String sentence) {
         Collections.sort(separators, Comparator.comparingInt(Separator::getStart));
         List<Separator> mergeResult = new ArrayList<>();

@@ -37,6 +37,10 @@ public class TranslateUtil {
 
     private static final CloseableHttpClient httpClient = HttpClients.createDefault();
 
+    private TranslateUtil() {
+
+    }
+
     public static String getTranslation(Document document, String modelId, String url) {
         List<Sentence> transSentences = document.getSentenceByType(SentenceType.SENTENCE);
         List<BatchSentence> batchSentenceList = getModelBatchList(modelId, transSentences);
