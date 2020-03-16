@@ -57,14 +57,22 @@ public class TranslateUtil {
         CountDownLatch countDownLatch = new CountDownLatch(batchSize);
         List<List<ResponseData>> batchResult = getInitList(batchSize);
         LOGGER.info("Translate batch size: {}", batchSize);
-
+        long start = System.currentTimeMillis();
         try {
             for (int i = 0; i < batchSize; i++) {
                 List<RequestData> requestData = batchRequest.get(i);
                 final int index = i;
                 executor.submit(() -> {
-                    sendRequest(requestData, url, index, batchResult);
-                    countDownLatch.countDown();
+                    try {
+                        sendRequest(requestData, url, index, batchResult);
+                    } catch (TranslatorException e) {
+                        LOGGER.warn("Retry sendRequest", e);
+                        sendRequest(requestData, url, index, batchResult);
+                    } catch (Exception e) {
+                        LOGGER.error("Exception during send request", e);
+                    } finally {
+                        countDownLatch.countDown();
+                    }
                 });
             }
             countDownLatch.await();
@@ -73,7 +81,18 @@ public class TranslateUtil {
             throw new TranslatorException(ErrorCode.INTERNAL_ERROR);
         }
 
+        LOGGER.info("Translator cost {}ms to finish.", System.currentTimeMillis() - start);
+        isValidResult(batchResult);
         return getTransList(modelId, batchResult);
+    }
+
+    private static void isValidResult(List<List<ResponseData>> batchResultList) {
+        for (List<ResponseData> batchResult : batchResultList) {
+            if (null == batchResult) {
+                LOGGER.error("Result is null");
+                throw new TranslatorException(ErrorCode.INTERNAL_ERROR);
+            }
+        }
     }
 
     private static List<String> getTransList(String modelId, List<List<ResponseData>> batchResult) {
@@ -131,7 +150,6 @@ public class TranslateUtil {
         request.setEntity(new StringEntity(JSON.toJSONString(batchRequest), StandardCharsets.UTF_8));
 
         try (CloseableHttpResponse response = httpClient.execute(request)) {
-            LOGGER.info("Batch {} get result", idx);
             String result = EntityUtils.toString(response.getEntity());
             if (HttpStatus.SC_OK != response.getStatusLine().getStatusCode()) {
                 LOGGER.error("Get result error: {}", response.getStatusLine().getStatusCode());
@@ -143,11 +161,7 @@ public class TranslateUtil {
         } catch (IOException e) {
             LOGGER.error("IOException during send request to server. ", e);
             throw new TranslatorException(ErrorCode.INTERNAL_ERROR);
-        } catch (Exception e) {
-            LOGGER.error("Exception", e);
-            throw new TranslatorException(ErrorCode.INTERNAL_ERROR);
         }
-
     }
 
     private static List<List<ResponseData>> getInitList(int batchSize) {

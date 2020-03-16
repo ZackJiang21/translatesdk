@@ -14,11 +14,11 @@ public class Translator {
     public static String getTranslation(String modeId, String input, String url) {
         if (!TranslateConst.MODEL_LIST.contains(modeId)) {
             LOGGER.error("Model id {} not illegal", modeId);
-            throw new TranslatorException(ErrorCode.PARAM_ILLEGAL);
+            throw new TranslatorException(ErrorCode.INVALID_PARAM);
         }
         if (input.length() >= TranslateConst.INPUT_LIMIT || input.length() == 0) {
             LOGGER.error("Input length not illegal: {}", input.length());
-            throw new TranslatorException(ErrorCode.PARAM_ILLEGAL);
+            throw new TranslatorException(ErrorCode.INVALID_PARAM);
         }
         Document document = new Document(input);
         String translation = TranslateUtil.getTranslation(document, modeId, url);
