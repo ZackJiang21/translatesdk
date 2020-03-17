@@ -45,6 +45,10 @@ public class TokenizeUtil {
                 result.add(line);
             }
             process.waitFor();
+            if (process.exitValue() != 0) {
+                LOGGER.error("Exception during invoke python");
+                throw new TranslatorException(ErrorCode.REQUIREMENT_UNSATISFIED);
+            }
         } catch (IOException e) {
             LOGGER.error("IOException during exec tokenization.", e);
             throw new TranslatorException(ErrorCode.INTERNAL_ERROR, e);

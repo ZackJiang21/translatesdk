@@ -6,4 +6,6 @@ public interface ErrorCode {
     int INVALID_PARAM = 2;
 
     int API_ERROR = 3;
+
+    int REQUIREMENT_UNSATISFIED = 4;
 }
