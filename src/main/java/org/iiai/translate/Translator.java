@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 public class Translator {
     private static final Logger LOGGER = LoggerFactory.getLogger(Translator.class);
 
-    public static String getTranslation(String modeId, String input, String url) {
+    public static String getTranslation(String modeId, String input, String url, String token) {
         if (!TranslateConst.MODEL_LIST.contains(modeId)) {
             LOGGER.error("Model id {} not illegal", modeId);
             throw new TranslatorException(ErrorCode.INVALID_PARAM);
@@ -21,7 +21,7 @@ public class Translator {
             throw new TranslatorException(ErrorCode.INVALID_PARAM);
         }
         Document document = new Document(input);
-        String translation = TranslateUtil.getTranslation(document, modeId, url);
+        String translation = TranslateUtil.getTranslation(document, modeId, url, token);
         return translation;
     }
 }

@@ -14,4 +14,6 @@ public interface TranslateConst {
     String AR2EN_CASED = "ar2en_cased";
 
     String AR2EN_UNCASED = "ar2en_uncased";
+
+    String TOKEN_HEADER = "X-Auth-Token";
 }

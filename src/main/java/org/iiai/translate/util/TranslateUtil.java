@@ -41,14 +41,14 @@ public class TranslateUtil {
 
     }
 
-    public static String getTranslation(Document document, String modelId, String url) {
+    public static String getTranslation(Document document, String modelId, String url, String token) {
         List<Sentence> transSentences = document.getSentenceByType(SentenceType.SENTENCE);
         List<BatchSentence> batchSentenceList = getModelBatchList(modelId, transSentences);
-        List<String> transList = asyncGetTranslation(batchSentenceList, modelId, url);
+        List<String> transList = asyncGetTranslation(batchSentenceList, modelId, url, token);
         return document.getTranslation(transList);
     }
 
-    private static List<String> asyncGetTranslation(List<BatchSentence> batchSentenceList, String modelId, String url) {
+    private static List<String> asyncGetTranslation(List<BatchSentence> batchSentenceList, String modelId, String url, String token) {
 
         List<List<RequestData>> batchRequest = new ArrayList<>();
         batchSentenceList.forEach(batchSentence -> batchRequest.addAll(batchSentence.getRequestBatch()));
@@ -64,10 +64,10 @@ public class TranslateUtil {
                 final int index = i;
                 executor.submit(() -> {
                     try {
-                        sendRequest(requestData, url, index, batchResult);
+                        sendRequest(requestData, url, token, index, batchResult);
                     } catch (TranslatorException e) {
                         LOGGER.warn("Retry sendRequest", e);
-                        sendRequest(requestData, url, index, batchResult);
+                        sendRequest(requestData, url, token, index, batchResult);
                     } catch (Exception e) {
                         LOGGER.error("Exception during send request", e);
                     } finally {
@@ -145,9 +145,10 @@ public class TranslateUtil {
         return String.join(" ", uncasedTokens);
     }
 
-    private static void sendRequest(List<RequestData> batchRequest, String url, int idx, List<List<ResponseData>> batchResult) {
+    private static void sendRequest(List<RequestData> batchRequest, String url, String token, int idx, List<List<ResponseData>> batchResult) {
         HttpPost request = new HttpPost(url);
         request.setEntity(new StringEntity(JSON.toJSONString(batchRequest), StandardCharsets.UTF_8));
+        request.setHeader(TranslateConst.TOKEN_HEADER, token);
 
         try (CloseableHttpResponse response = httpClient.execute(request)) {
             String result = EntityUtils.toString(response.getEntity());
