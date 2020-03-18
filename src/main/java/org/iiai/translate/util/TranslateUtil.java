@@ -14,6 +14,8 @@ import org.iiai.translate.constant.SentenceType;
 import org.iiai.translate.constant.TranslateConst;
 import org.iiai.translate.exception.TranslatorException;
 import org.iiai.translate.model.*;
+import org.iiai.translate.processor.PostProcessor;
+import org.iiai.translate.processor.ReplaceProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +39,12 @@ public class TranslateUtil {
 
     private static final CloseableHttpClient httpClient = HttpClients.createDefault();
 
+    private static final List<PostProcessor> processorList = new ArrayList<>();
+
+    static {
+        processorList.add(new ReplaceProcessor());
+    }
+
     private TranslateUtil() {
 
     }
@@ -45,7 +53,12 @@ public class TranslateUtil {
         List<Sentence> transSentences = document.getSentenceByType(SentenceType.SENTENCE);
         List<BatchSentence> batchSentenceList = getModelBatchList(modelId, transSentences);
         List<String> transList = asyncGetTranslation(batchSentenceList, modelId, url, token);
-        return document.getTranslation(transList);
+
+        String result = document.getTranslation(transList);
+        for (PostProcessor processor : processorList) {
+            result = processor.process(result, modelId);
+        }
+        return result;
     }
 
     private static List<String> asyncGetTranslation(List<BatchSentence> batchSentenceList, String modelId, String url, String token) {
