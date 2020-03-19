@@ -13,11 +13,11 @@ public class Translator {
 
     public static String getTranslation(String modeId, String input, String url, String token) {
         if (!TranslateConst.MODEL_LIST.contains(modeId)) {
-            LOGGER.error("Model id {} not illegal", modeId);
+            LOGGER.error("Model id {} is illegal", modeId);
             throw new TranslatorException(ErrorCode.INVALID_PARAM);
         }
-        if (input.length() >= TranslateConst.INPUT_LIMIT || input.length() == 0) {
-            LOGGER.error("Input length not illegal: {}", input.length());
+        if (input.length() > TranslateConst.INPUT_LIMIT || input.length() == 0) {
+            LOGGER.error("Input length is illegal: {}", input.length());
             throw new TranslatorException(ErrorCode.INVALID_PARAM);
         }
         Document document = new Document(input);
