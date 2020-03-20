@@ -1,6 +1,7 @@
 package org.iiai.translate.model;
 
-import org.iiai.translate.constant.SentenceType;
+
+import org.iiai.translate.model.type.SentenceType;
 
 public class Sentence {
     private String sentContent;

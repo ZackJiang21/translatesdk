@@ -10,12 +10,15 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.iiai.translate.constant.ErrorCode;
-import org.iiai.translate.constant.SentenceType;
 import org.iiai.translate.constant.TranslateConst;
 import org.iiai.translate.exception.TranslatorException;
 import org.iiai.translate.model.*;
-import org.iiai.translate.processor.PostProcessor;
-import org.iiai.translate.processor.ReplaceProcessor;
+import org.iiai.translate.model.type.SingleSentType;
+import org.iiai.translate.processor.postprocessor.PostProcessor;
+import org.iiai.translate.processor.postprocessor.ReplaceProcessor;
+import org.iiai.translate.processor.preprocessor.AndSplitProcessor;
+import org.iiai.translate.processor.preprocessor.CommaSplitProcessor;
+import org.iiai.translate.processor.preprocessor.PreProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,30 +38,41 @@ public class TranslateUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslateUtil.class);
 
-    private static final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+    private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newCachedThreadPool();
 
-    private static final CloseableHttpClient httpClient = HttpClients.createDefault();
+    private static final CloseableHttpClient HTTP_CLIENT = HttpClients.createDefault();
 
-    private static final List<PostProcessor> processorList = new ArrayList<>();
+    private static final List<PostProcessor> POST_PROCESSORS = Arrays.asList(new PostProcessor[]{
+            new ReplaceProcessor()
+    });
 
-    static {
-        processorList.add(new ReplaceProcessor());
-    }
+    private static final List<PreProcessor> PRE_PROCESSORS = Arrays.asList(new PreProcessor[] {
+            new CommaSplitProcessor(),
+            new AndSplitProcessor()
+    });
 
     private TranslateUtil() {
 
     }
 
     public static String getTranslation(Document document, String modelId, String url, String token) {
-        List<Sentence> transSentences = document.getSentenceByType(SentenceType.SENTENCE);
+        preProcess(document, modelId);
+
+        List<Sentence> transSentences = document.getSentenceByType(SingleSentType.class);
         List<BatchSentence> batchSentenceList = getModelBatchList(modelId, transSentences);
         List<String> transList = asyncGetTranslation(batchSentenceList, modelId, url, token);
 
         String result = document.getTranslation(transList);
-        for (PostProcessor processor : processorList) {
+        for (PostProcessor processor : POST_PROCESSORS) {
             result = processor.process(result, modelId);
         }
         return result;
+    }
+
+    private static void preProcess(Document document, String modelId) {
+        for (PreProcessor processor : PRE_PROCESSORS) {
+            processor.process(document, modelId);
+        }
     }
 
     private static List<String> asyncGetTranslation(List<BatchSentence> batchSentenceList, String modelId, String url, String token) {
@@ -75,7 +89,7 @@ public class TranslateUtil {
             for (int i = 0; i < batchSize; i++) {
                 List<RequestData> requestData = batchRequest.get(i);
                 final int index = i;
-                executor.submit(() -> {
+                EXECUTOR.submit(() -> {
                     try {
                         sendRequest(requestData, url, token, index, batchResult);
                     } catch (TranslatorException e) {
@@ -163,7 +177,7 @@ public class TranslateUtil {
         request.setEntity(new StringEntity(JSON.toJSONString(batchRequest), StandardCharsets.UTF_8));
         request.setHeader(TranslateConst.TOKEN_HEADER, token);
 
-        try (CloseableHttpResponse response = httpClient.execute(request)) {
+        try (CloseableHttpResponse response = HTTP_CLIENT.execute(request)) {
             String result = EntityUtils.toString(response.getEntity());
             if (HttpStatus.SC_OK != response.getStatusLine().getStatusCode()) {
                 LOGGER.error("Get result error: {}", response.getStatusLine().getStatusCode());

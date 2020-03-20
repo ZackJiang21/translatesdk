@@ -1,4 +1,4 @@
-package org.iiai.translate.processor;
+package org.iiai.translate.processor.postprocessor;
 
 import org.iiai.translate.constant.TranslateConst;
 

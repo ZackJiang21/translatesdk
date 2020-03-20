@@ -42,4 +42,24 @@ public class SentenceUtil {
         }
         return mergeResult;
     }
+
+    public static List<Integer> getIndexList(String sentStr, String mark) {
+        List<Integer> indexList = new ArrayList<>();
+        int index = sentStr.indexOf(mark);
+        while (index >= 0) {
+            indexList.add(index);
+            index = sentStr.indexOf(mark, index + 1);
+        }
+        return indexList;
+    }
+
+    public static List<Integer> getIndexList(List<String> wordList, String mark) {
+        List<Integer> indexList = new ArrayList<>();
+        for (int i = 0; i < wordList.size(); i++) {
+            if (mark.equals(wordList.get(i))) {
+                indexList.add(i);
+            }
+        }
+        return indexList;
+    }
 }
