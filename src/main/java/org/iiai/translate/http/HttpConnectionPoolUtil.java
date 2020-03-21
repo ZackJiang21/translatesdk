@@ -37,7 +37,7 @@ public class HttpConnectionPoolUtil {
     private static final int CONNECT_TIMEOUT = 1000;// 设置连接建立的超时时间为10s
     private static final int SOCKET_TIMEOUT = 8000;
     private static final int MAX_CONN = 64; // 最大连接数
-    private static final int Max_PRE_ROUTE = 64;
+    private static final int MAX_PRE_ROUTE = 64;
     private static CloseableHttpClient httpClient; // 发送请求的客户端单例
     private static PoolingHttpClientConnectionManager manager; //连接池管理类
     private static ScheduledExecutorService monitorExecutor;
@@ -93,7 +93,7 @@ public class HttpConnectionPoolUtil {
         manager = new PoolingHttpClientConnectionManager(registry);
         //设置连接参数
         manager.setMaxTotal(MAX_CONN); // 最大连接数
-        manager.setDefaultMaxPerRoute(Max_PRE_ROUTE); // 路由最大连接数
+        manager.setDefaultMaxPerRoute(MAX_PRE_ROUTE); // 路由最大连接数
 
         //请求失败时,进行请求重试
         HttpRequestRetryHandler handler = (e, i, httpContext) -> {
