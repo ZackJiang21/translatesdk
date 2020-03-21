@@ -11,7 +11,7 @@ import org.apache.http.util.EntityUtils;
 import org.iiai.translate.constant.ErrorCode;
 import org.iiai.translate.constant.TranslateConst;
 import org.iiai.translate.exception.TranslatorException;
-import org.iiai.translate.http.HttpClient;
+import org.iiai.translate.http.HttpConnectionPoolUtil;
 import org.iiai.translate.model.*;
 import org.iiai.translate.model.type.SingleSentType;
 import org.iiai.translate.processor.mergeprocessor.HtmlProcessor;
@@ -44,7 +44,7 @@ public class TranslateUtil {
 
     private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newCachedThreadPool();
 
-    private static final CloseableHttpClient HTTP_CLIENT = HttpClient.getInstance();
+    private static final CloseableHttpClient HTTP_CLIENT = HttpConnectionPoolUtil.getHttpClient();
 
     private static final List<PostProcessor> POST_PROCESSORS = Arrays.asList(new PostProcessor[]{
             new SingleSentProcessor(),
