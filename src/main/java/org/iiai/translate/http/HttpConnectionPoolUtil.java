@@ -35,7 +35,7 @@ public class HttpConnectionPoolUtil {
     private static Logger LOGGER = LoggerFactory.getLogger(HttpConnectionPoolUtil.class);
 
     private static final int CONNECT_TIMEOUT = 1000;// 设置连接建立的超时时间为10s
-    private static final int SOCKET_TIMEOUT = 5000;
+    private static final int SOCKET_TIMEOUT = 8000;
     private static final int MAX_CONN = 64; // 最大连接数
     private static final int Max_PRE_ROUTE = 64;
     private static CloseableHttpClient httpClient; // 发送请求的客户端单例
@@ -71,7 +71,7 @@ public class HttpConnectionPoolUtil {
                             manager.closeExpiredConnections();
                             //关闭5s空闲的连接
                             manager.closeIdleConnections(30000, TimeUnit.MILLISECONDS);
-                            LOGGER.info("close expired and idle for over 30s connection");
+                            LOGGER.debug("close expired and idle for over 30s connection");
                         }
                     }, 0, 60000, TimeUnit.MILLISECONDS);
                 }
