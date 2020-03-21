@@ -81,11 +81,11 @@ public class CommaSplitProcessor implements PreProcessor {
             if (i != commaSentList.size() - 1) {
                 boolean isLower = i == 0 ? false : true;
                 SingleSentType sentenceType = new SingleSentType(true, isLower);
-                sentenceList.add(new Sentence(commaSentList.get(i), sentenceType));
+                sentenceList.add(new Sentence(commaSentList.get(i).trim(), sentenceType));
                 sentenceList.add(new Sentence(commaResult, new SpecSymbol(SpecSymbolType.COMMA)));
             } else {
                 SingleSentType sentenceType = new SingleSentType(false, true);
-                sentenceList.add(new Sentence(commaSentList.get(i), sentenceType));
+                sentenceList.add(new Sentence(commaSentList.get(i).trim(), sentenceType));
             }
         }
     }
@@ -102,10 +102,10 @@ public class CommaSplitProcessor implements PreProcessor {
             handleNotList(frontSent, modelId, sentenceList, true, isFirst);
             handleNotList(rearSent, modelId, sentenceList, false, false);
         } else {
-            boolean isLower = isFirst && isFirst ? false : true;
+            boolean isLower = (isFirst && isFront) ? false : true;
             boolean isNonStop = isFront ? true : false;
             SingleSentType sentType = new SingleSentType(isNonStop, isLower);
-            sentenceList.add(new Sentence(sentence, sentType));
+            sentenceList.add(new Sentence(sentence.trim(), sentType));
             if (isFront) {
                 String commaResult = commaResultMap.get(modelId);
                 sentenceList.add(new Sentence(commaResult, new SpecSymbol(SpecSymbolType.COMMA)));

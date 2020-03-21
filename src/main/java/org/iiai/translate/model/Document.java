@@ -22,6 +22,8 @@ public class Document {
 
     private List<Sentence> sentenceList;
 
+    private List<String> transList;
+
     public Document(String content) {
         this.content = content;
         List<Separator> separatorList = getSeparatorList(content);
@@ -44,6 +46,14 @@ public class Document {
         this.sentenceList = sentenceList;
     }
 
+    public List<String> getTransList() {
+        return transList;
+    }
+
+    public void setTransList(List<String> transList) {
+        this.transList = transList;
+    }
+
     public List<Sentence> getSentenceByType(Class className) {
         List<Sentence> result = new ArrayList<>();
         this.sentenceList.forEach(sentence -> {
@@ -54,7 +64,7 @@ public class Document {
         return result;
     }
 
-    public String getTranslation(List<String> transList) {
+    public String getTranslation() {
         Deque<String> transDeque = new LinkedList<>(transList);
         StringBuffer sb = new StringBuffer();
         sentenceList.forEach(sentence -> {
@@ -63,6 +73,7 @@ public class Document {
             } else {
                 sb.append(sentence.getSentContent());
             }
+            sb.append(" ");
         });
         return sb.toString();
     }

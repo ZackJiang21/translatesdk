@@ -14,8 +14,12 @@ import org.iiai.translate.constant.TranslateConst;
 import org.iiai.translate.exception.TranslatorException;
 import org.iiai.translate.model.*;
 import org.iiai.translate.model.type.SingleSentType;
+import org.iiai.translate.processor.mergeprocessor.HtmlProcessor;
+import org.iiai.translate.processor.mergeprocessor.MergeProcessor;
+import org.iiai.translate.processor.mergeprocessor.PuncProcessor;
 import org.iiai.translate.processor.postprocessor.PostProcessor;
 import org.iiai.translate.processor.postprocessor.ReplaceProcessor;
+import org.iiai.translate.processor.postprocessor.SingleSentProcessor;
 import org.iiai.translate.processor.preprocessor.AndSplitProcessor;
 import org.iiai.translate.processor.preprocessor.CommaSplitProcessor;
 import org.iiai.translate.processor.preprocessor.PreProcessor;
@@ -34,7 +38,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 public class TranslateUtil {
-    private static final int BATCH_SIZE = 5;
+    private static final int BATCH_SIZE = 4;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslateUtil.class);
 
@@ -43,12 +47,18 @@ public class TranslateUtil {
     private static final CloseableHttpClient HTTP_CLIENT = HttpClients.createDefault();
 
     private static final List<PostProcessor> POST_PROCESSORS = Arrays.asList(new PostProcessor[]{
+            new SingleSentProcessor(),
             new ReplaceProcessor()
     });
 
     private static final List<PreProcessor> PRE_PROCESSORS = Arrays.asList(new PreProcessor[] {
             new CommaSplitProcessor(),
             new AndSplitProcessor()
+    });
+
+    private static final List<MergeProcessor> MERGE_PROCESSORS = Arrays.asList(new MergeProcessor[]{
+            new HtmlProcessor(),
+            new PuncProcessor()
     });
 
     private TranslateUtil() {
@@ -61,11 +71,12 @@ public class TranslateUtil {
         List<Sentence> transSentences = document.getSentenceByType(SingleSentType.class);
         List<BatchSentence> batchSentenceList = getModelBatchList(modelId, transSentences);
         List<String> transList = asyncGetTranslation(batchSentenceList, modelId, url, token);
+        document.setTransList(transList);
 
-        String result = document.getTranslation(transList);
-        for (PostProcessor processor : POST_PROCESSORS) {
-            result = processor.process(result, modelId);
-        }
+        postProcess(document, modelId);
+
+        String result = document.getTranslation();
+        result = mergeProcess(result, modelId);
         return result;
     }
 
@@ -73,6 +84,19 @@ public class TranslateUtil {
         for (PreProcessor processor : PRE_PROCESSORS) {
             processor.process(document, modelId);
         }
+    }
+
+    private static void postProcess(Document document, String modelId) {
+        for (PostProcessor processor : POST_PROCESSORS) {
+            processor.process(document, modelId);
+        }
+    }
+
+    private static String mergeProcess(String input, String modelId) {
+        for (MergeProcessor processor : MERGE_PROCESSORS) {
+            input = processor.process(input, modelId);
+        }
+        return input;
     }
 
     private static List<String> asyncGetTranslation(List<BatchSentence> batchSentenceList, String modelId, String url, String token) {

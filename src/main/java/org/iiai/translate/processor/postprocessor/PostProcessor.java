@@ -1,5 +1,7 @@
 package org.iiai.translate.processor.postprocessor;
 
+import org.iiai.translate.model.Document;
+
 public interface PostProcessor {
-    String process(String input, String modelId);
+    void process(Document document, String modelId);
 }

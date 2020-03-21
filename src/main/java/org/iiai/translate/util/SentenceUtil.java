@@ -62,4 +62,11 @@ public class SentenceUtil {
         }
         return indexList;
     }
+
+    public static String lowerFirstLetter(String input) {
+        char[] charArr = input.toCharArray();
+        charArr[0] += 32;
+        return new String(charArr);
+    }
+
 }
