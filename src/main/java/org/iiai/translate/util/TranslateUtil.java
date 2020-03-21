@@ -116,8 +116,9 @@ public class TranslateUtil {
                 EXECUTOR.submit(() -> {
                     try {
                         long requestStart = System.currentTimeMillis();
+                        int len = requestData.stream().mapToInt(request -> request.getSrc().length()).sum();
                         sendRequest(requestData, url, token, index, batchResult);
-                        LOGGER.info("Request cost: {}ms", System.currentTimeMillis() - requestStart);
+                        LOGGER.debug("Request cost: {}ms, content length: {}", System.currentTimeMillis() - requestStart, len);
                     } catch (TranslatorException e) {
                         LOGGER.warn("Retry sendRequest", e);
                         sendRequest(requestData, url, token, index, batchResult);
