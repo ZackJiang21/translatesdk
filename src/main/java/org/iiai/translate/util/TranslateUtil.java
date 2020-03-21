@@ -7,11 +7,11 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.iiai.translate.constant.ErrorCode;
 import org.iiai.translate.constant.TranslateConst;
 import org.iiai.translate.exception.TranslatorException;
+import org.iiai.translate.http.HttpClient;
 import org.iiai.translate.model.*;
 import org.iiai.translate.model.type.SingleSentType;
 import org.iiai.translate.processor.mergeprocessor.HtmlProcessor;
@@ -44,7 +44,7 @@ public class TranslateUtil {
 
     private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newCachedThreadPool();
 
-    private static final CloseableHttpClient HTTP_CLIENT = HttpClients.createDefault();
+    private static final CloseableHttpClient HTTP_CLIENT = HttpClient.getInstance();
 
     private static final List<PostProcessor> POST_PROCESSORS = Arrays.asList(new PostProcessor[]{
             new SingleSentProcessor(),
@@ -115,7 +115,9 @@ public class TranslateUtil {
                 final int index = i;
                 EXECUTOR.submit(() -> {
                     try {
+                        long requestStart = System.currentTimeMillis();
                         sendRequest(requestData, url, token, index, batchResult);
+                        LOGGER.info("Request cost: {}ms", System.currentTimeMillis() - requestStart);
                     } catch (TranslatorException e) {
                         LOGGER.warn("Retry sendRequest", e);
                         sendRequest(requestData, url, token, index, batchResult);
