@@ -4,8 +4,6 @@ import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpRequest;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -129,18 +127,5 @@ public class HttpConnectionPoolUtil {
 
         CloseableHttpClient client = HttpClients.custom().setConnectionManager(manager).setRetryHandler(handler).build();
         return client;
-    }
-
-    /**
-     * 关闭连接池
-     */
-    public static void closeConnectionPool(){
-        try {
-            httpClient.close();
-            manager.close();
-            monitorExecutor.shutdown();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
