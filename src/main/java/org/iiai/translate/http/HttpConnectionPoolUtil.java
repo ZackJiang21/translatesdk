@@ -34,27 +34,13 @@ public class HttpConnectionPoolUtil {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HttpConnectionPoolUtil.class);
 
-    private static final int CONNECT_TIMEOUT = 1000;// 设置连接建立的超时时间为10s
-    private static final int SOCKET_TIMEOUT = 8000;
-    private static final int MAX_CONN = 64; // 最大连接数
-    private static final int MAX_PRE_ROUTE = 64;
+    private static final int MAX_CONN = 16; // 最大连接数
+    private static final int MAX_PRE_ROUTE = 16;
     private static CloseableHttpClient httpClient; // 发送请求的客户端单例
     private static PoolingHttpClientConnectionManager manager; //连接池管理类
     private static ScheduledExecutorService monitorExecutor;
 
     private final static Object syncLock = new Object(); // 相当于线程锁,用于线程安全
-
-    /**
-     * 对http请求进行基本设置
-     * @param httpRequestBase http请求
-     */
-    private static void setRequestConfig(HttpRequestBase httpRequestBase){
-        RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(CONNECT_TIMEOUT)
-                .setConnectTimeout(CONNECT_TIMEOUT)
-                .setSocketTimeout(SOCKET_TIMEOUT).build();
-
-        httpRequestBase.setConfig(requestConfig);
-    }
 
     public static CloseableHttpClient getHttpClient(){
         if (httpClient == null){
@@ -70,10 +56,10 @@ public class HttpConnectionPoolUtil {
                             //关闭异常连接
                             manager.closeExpiredConnections();
                             //关闭5s空闲的连接
-                            manager.closeIdleConnections(30000, TimeUnit.MILLISECONDS);
-                            LOGGER.debug("close expired and idle for over 30s connection");
+                            manager.closeIdleConnections(5000, TimeUnit.MILLISECONDS);
+                            LOGGER.debug("close expired and idle for over 5s connection");
                         }
-                    }, 0, 60000, TimeUnit.MILLISECONDS);
+                    }, 5000, 5000, TimeUnit.MILLISECONDS);
                 }
             }
         }
