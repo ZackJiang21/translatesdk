@@ -14,6 +14,7 @@ import org.iiai.translate.exception.TranslatorException;
 import org.iiai.translate.http.HttpConnectionPoolUtil;
 import org.iiai.translate.model.*;
 import org.iiai.translate.model.type.SingleSentType;
+import org.iiai.translate.processor.mergeprocessor.FormatProcessor;
 import org.iiai.translate.processor.mergeprocessor.HtmlProcessor;
 import org.iiai.translate.processor.mergeprocessor.MergeProcessor;
 import org.iiai.translate.processor.mergeprocessor.PuncProcessor;
@@ -38,7 +39,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 public class TranslateUtil {
-    private static final int BATCH_SIZE = 4;
+    private static final int BATCH_SIZE = 2;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslateUtil.class);
 
@@ -58,7 +59,8 @@ public class TranslateUtil {
 
     private static final List<MergeProcessor> MERGE_PROCESSORS = Arrays.asList(new MergeProcessor[]{
             new HtmlProcessor(),
-            new PuncProcessor()
+            new PuncProcessor(),
+            new FormatProcessor()
     });
 
     private TranslateUtil() {

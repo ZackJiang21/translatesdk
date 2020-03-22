@@ -11,12 +11,10 @@ import org.iiai.translate.util.TokenizeUtil;
 import java.util.*;
 
 public class Document {
-    private static final List<SeparatorFilter> sepFilterList = new ArrayList<>();
-
-    static {
-        sepFilterList.add(new RegexFilter("[\r\n\f]+"));
-        sepFilterList.add(new RegexFilter("\n*(-( *)){2,}\n*"));
-    }
+    private static final List<SeparatorFilter> sepFilterList = Arrays.asList(new SeparatorFilter[]{
+            new RegexFilter("[\r\n\f]+"),
+            new RegexFilter("\n*(-( *)){2,}\n*")
+    });
 
     private String content;
 
@@ -89,7 +87,7 @@ public class Document {
         List<Sentence> sentenceList = new ArrayList<>();
 
         int sentIndex = 0;
-        for (Separator separator :  separatorList) {
+        for (Separator separator : separatorList) {
             String sentContent = this.content.substring(sentIndex, separator.getStart()).trim();
             tokenizeSentence(sentContent, sentenceList);
             sentenceList.add(new Sentence(separator.getContent(), new SpecSymbol(SpecSymbolType.SEPARATOR)));
