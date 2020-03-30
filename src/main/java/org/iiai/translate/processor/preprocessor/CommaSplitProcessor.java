@@ -102,7 +102,7 @@ public class CommaSplitProcessor implements PreProcessor {
             handleNotList(frontSent, modelId, sentenceList, true, isFirst);
             handleNotList(rearSent, modelId, sentenceList, false, false);
         } else {
-            boolean isLower = (isFirst && isFront) ? false : true;
+            boolean isLower = isFirst ? false : true;
             boolean isNonStop = isFront ? true : false;
             SingleSentType sentType = new SingleSentType(isNonStop, isLower);
             sentenceList.add(new Sentence(sentence.trim(), sentType));
