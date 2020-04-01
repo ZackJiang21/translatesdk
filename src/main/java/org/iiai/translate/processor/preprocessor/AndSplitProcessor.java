@@ -1,5 +1,6 @@
 package org.iiai.translate.processor.preprocessor;
 
+import org.apache.commons.lang3.StringUtils;
 import org.iiai.translate.constant.TranslateConst;
 import org.iiai.translate.model.Document;
 import org.iiai.translate.model.Sentence;
@@ -49,7 +50,9 @@ public class AndSplitProcessor implements PreProcessor {
 
             SingleSentType retType = new SingleSentType(isNonStop, isLower);
             String sentence = String.join(" ", wordList);
-            sentenceList.add(new Sentence(sentence.trim(), retType));
+            if (StringUtils.isNotEmpty(sentence.trim())) {
+                sentenceList.add(new Sentence(sentence.trim(), retType));
+            }
         }
     }
 

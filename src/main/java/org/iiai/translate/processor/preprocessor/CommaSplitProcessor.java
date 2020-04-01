@@ -1,5 +1,6 @@
 package org.iiai.translate.processor.preprocessor;
 
+import org.apache.commons.lang3.StringUtils;
 import org.iiai.translate.constant.SpecSymbolType;
 import org.iiai.translate.constant.TranslateConst;
 import org.iiai.translate.model.Document;
@@ -79,13 +80,17 @@ public class CommaSplitProcessor implements PreProcessor {
         List<String> commaSentList = Arrays.asList(sentObj.getSentContent().split(commaSplit));
         for (int i = 0; i < commaSentList.size(); i++) {
             if (i != commaSentList.size() - 1) {
-                boolean isLower = i == 0 ? false : true;
-                SingleSentType sentenceType = new SingleSentType(true, isLower);
-                sentenceList.add(new Sentence(commaSentList.get(i).trim(), sentenceType));
+                if (StringUtils.isNotEmpty(commaSentList.get(i).trim())) {
+                    boolean isLower = i == 0 ? false : true;
+                    SingleSentType sentenceType = new SingleSentType(true, isLower);
+                    sentenceList.add(new Sentence(commaSentList.get(i).trim(), sentenceType));
+                }
                 sentenceList.add(new Sentence(commaResult, new SpecSymbol(SpecSymbolType.COMMA)));
             } else {
-                SingleSentType sentenceType = new SingleSentType(false, true);
-                sentenceList.add(new Sentence(commaSentList.get(i).trim(), sentenceType));
+                if (StringUtils.isNotEmpty(commaSentList.get(i).trim())) {
+                    SingleSentType sentenceType = new SingleSentType(false, true);
+                    sentenceList.add(new Sentence(commaSentList.get(i).trim(), sentenceType));
+                }
             }
         }
     }
@@ -105,7 +110,9 @@ public class CommaSplitProcessor implements PreProcessor {
             boolean isLower = isFirst ? false : true;
             boolean isNonStop = isFront ? true : false;
             SingleSentType sentType = new SingleSentType(isNonStop, isLower);
-            sentenceList.add(new Sentence(sentence.trim(), sentType));
+            if (StringUtils.isNotEmpty(sentence.trim())) {
+                sentenceList.add(new Sentence(sentence.trim(), sentType));
+            }
             if (isFront) {
                 String commaResult = commaResultMap.get(modelId);
                 sentenceList.add(new Sentence(commaResult, new SpecSymbol(SpecSymbolType.COMMA)));
