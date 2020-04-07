@@ -45,8 +45,8 @@ public class AndSplitProcessor implements PreProcessor {
             handleSplit(sentType, frontWordList, sentenceList, true, isFirst);
             handleSplit(sentType, rearWordList, sentenceList, false, false);
         } else {
-            boolean isNonStop = (isFront ? true : false) || sentType.isNonStop();
-            boolean isLower = (isFirst ? false : true) || sentType.isLower();
+            boolean isNonStop = isFront || sentType.isNonStop();
+            boolean isLower = (!isFirst) || sentType.isLower();
 
             SingleSentType retType = new SingleSentType(isNonStop, isLower);
             String sentence = String.join(" ", wordList);

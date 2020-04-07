@@ -47,21 +47,15 @@ public class TranslateUtil {
 
     private static final CloseableHttpClient HTTP_CLIENT = HttpConnectionPoolUtil.getHttpClient();
 
-    private static final List<PostProcessor> POST_PROCESSORS = Arrays.asList(new PostProcessor[]{
-            new SingleSentProcessor(),
-            new ReplaceProcessor()
-    });
+    private static final List<PostProcessor> POST_PROCESSORS = Arrays.asList(new SingleSentProcessor(),
+            new ReplaceProcessor());
 
-    private static final List<PreProcessor> PRE_PROCESSORS = Arrays.asList(new PreProcessor[] {
-            new CommaSplitProcessor(),
-            new AndSplitProcessor()
-    });
+    private static final List<PreProcessor> PRE_PROCESSORS = Arrays.asList(new CommaSplitProcessor(),
+            new AndSplitProcessor());
 
-    private static final List<MergeProcessor> MERGE_PROCESSORS = Arrays.asList(new MergeProcessor[]{
-            new HtmlProcessor(),
+    private static final List<MergeProcessor> MERGE_PROCESSORS = Arrays.asList(new HtmlProcessor(),
             new PuncProcessor(),
-            new FormatProcessor()
-    });
+            new FormatProcessor());
 
     private TranslateUtil() {
 

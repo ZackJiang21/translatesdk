@@ -1,6 +1,5 @@
 package org.iiai.translate.filter;
 
-import org.iiai.translate.constant.SentenceType;
 import org.iiai.translate.model.Separator;
 
 import java.util.ArrayList;
