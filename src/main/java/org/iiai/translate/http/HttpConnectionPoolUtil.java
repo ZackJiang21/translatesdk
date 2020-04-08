@@ -34,7 +34,7 @@ public class HttpConnectionPoolUtil {
 
     private static final int MAX_CONN = 16; // 最大连接数
     private static final int MAX_PRE_ROUTE = 16;
-    private static CloseableHttpClient httpClient; // 发送请求的客户端单例
+    private volatile static CloseableHttpClient httpClient; // 发送请求的客户端单例
     private static PoolingHttpClientConnectionManager manager; //连接池管理类
     private static ScheduledExecutorService monitorExecutor;
 
