@@ -10,10 +10,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class TokenizeUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenizeUtil.class);
+
+    private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newFixedThreadPool(16);
 
     private static final String SCRIPT =
             "from nltk.tokenize import sent_tokenize\n" +
@@ -32,7 +39,36 @@ public class TokenizeUtil {
 
     }
 
+    public static List<List<String>> getBatchTokens(List<String> sentList) {
+        List<List<String>> result = new ArrayList<>();
+        List<Future<List<String>>> futureList = new ArrayList<>();
+        for (String sent : sentList) {
+            Future<List<String>> futureRet = EXECUTOR.submit(() -> {
+                LOGGER.debug("start tokenization");
+                return getTokenizedSents(sent);
+            });
+            futureList.add(futureRet);
+        }
+        for (Future<List<String>> future : futureList) {
+            try {
+                result.add(future.get());
+                LOGGER.debug("get token result");
+            } catch (InterruptedException e) {
+                LOGGER.error("Interrupted during exec tokenization.", e);
+                throw new TranslatorException(ErrorCode.INTERNAL_ERROR, e);
+            } catch (ExecutionException e) {
+                LOGGER.error("Execute during exec tokenization.", e);
+                throw new TranslatorException(ErrorCode.INTERNAL_ERROR, e);
+            }
+        }
+        return result;
+    }
+
     public static List<String> getTokenizedSents(String sentence) {
+        if (sentence.split(" ").length == 1) {
+            LOGGER.info("Single word in token string");
+            return Arrays.asList(sentence);
+        }
         List<String> result = new ArrayList<>();
 
         Process process = null;

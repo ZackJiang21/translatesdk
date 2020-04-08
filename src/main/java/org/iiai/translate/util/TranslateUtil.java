@@ -39,7 +39,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 public class TranslateUtil {
-    private static final int BATCH_SIZE = 2;
+    private static final int BATCH_SIZE = 32;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslateUtil.class);
 
@@ -198,7 +198,9 @@ public class TranslateUtil {
     private static void sendRequest(List<RequestData> batchRequest, String url, String token, int idx, List<List<ResponseData>> batchResult) {
         HttpPost request = new HttpPost(url);
         request.setEntity(new StringEntity(JSON.toJSONString(batchRequest), StandardCharsets.UTF_8));
-        request.setHeader(TranslateConst.TOKEN_HEADER, token);
+        if (StringUtils.isNotEmpty(token)) {
+            request.setHeader(TranslateConst.TOKEN_HEADER, token);
+        }
 
         try (CloseableHttpResponse response = HTTP_CLIENT.execute(request)) {
             String result = EntityUtils.toString(response.getEntity());

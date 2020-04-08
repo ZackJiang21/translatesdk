@@ -9,6 +9,7 @@ import org.iiai.translate.util.SentenceUtil;
 import org.iiai.translate.util.TokenizeUtil;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Document {
     private static final List<SeparatorFilter> sepFilterList = Arrays.asList(new SeparatorFilter[]{
@@ -84,28 +85,43 @@ public class Document {
     }
 
     private void splitDocument(List<Separator> separatorList) {
+        splitBySpec(separatorList);
+
+        List<Sentence> wordSentenceList = getSentenceByType(SingleSentType.class);
+        List<String> sentContentList = wordSentenceList.stream().map(sentObj -> sentObj.getSentContent()).collect(Collectors.toList());
+        List<List<String>> tokenizedList = TokenizeUtil.getBatchTokens(sentContentList);
+
+        List<Sentence> result = new ArrayList<>();
+        int index = 0;
+        for (Sentence sentObj : sentenceList) {
+            if (sentObj.getType() instanceof SpecSymbol) {
+                result.add(sentObj);
+            } else {
+                List<String> tokenizedStrList = tokenizedList.get(index);
+                tokenizedStrList.forEach(sent -> {
+                    if (sent.length() > 0) {
+                        result.add(new Sentence(sent, new SingleSentType()));
+                    }
+                });
+                index++;
+            }
+        }
+
+        this.sentenceList = result;
+    }
+
+    private void splitBySpec(List<Separator> separatorList) {
         List<Sentence> sentenceList = new ArrayList<>();
 
         int sentIndex = 0;
         for (Separator separator : separatorList) {
             String sentContent = this.content.substring(sentIndex, separator.getStart()).trim();
-            tokenizeSentence(sentContent, sentenceList);
+            sentenceList.add(new Sentence(sentContent, new SingleSentType()));
             sentenceList.add(new Sentence(separator.getContent(), new SpecSymbol(SpecSymbolType.SEPARATOR)));
             sentIndex = separator.getEnd();
         }
         String lastContent = this.content.substring(sentIndex).trim();
-        tokenizeSentence(lastContent, sentenceList);
+        sentenceList.add(new Sentence(lastContent, new SingleSentType()));
         this.sentenceList = sentenceList;
-    }
-
-    private void tokenizeSentence(String sentence, List<Sentence> sentenceList) {
-        if (sentence.length() > 0) {
-            List<String> tokenizedList = TokenizeUtil.getTokenizedSents(sentence);
-            tokenizedList.forEach(sent -> {
-                if (sent.length() > 0) {
-                    sentenceList.add(new Sentence(sent, new SingleSentType()));
-                }
-            });
-        }
     }
 }
