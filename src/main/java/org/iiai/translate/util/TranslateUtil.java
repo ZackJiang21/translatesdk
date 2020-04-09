@@ -116,8 +116,7 @@ public class TranslateUtil {
                         sendRequest(requestData, url, token, index, batchResult);
                         LOGGER.debug("Request cost: {}ms, content length: {}", System.currentTimeMillis() - requestStart, len);
                     } catch (TranslatorException e) {
-                        LOGGER.warn("Retry sendRequest", e);
-                        sendRequest(requestData, url, token, index, batchResult);
+                        LOGGER.error("Translator Exception during send request", e);
                     } catch (Exception e) {
                         LOGGER.error("Exception during send request", e);
                     } finally {
