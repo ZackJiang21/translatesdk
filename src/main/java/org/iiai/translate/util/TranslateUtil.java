@@ -145,27 +145,10 @@ public class TranslateUtil {
     }
 
     private static List<String> getTransList(String modelId, List<List<ResponseData>> batchResult) {
-        if (!TranslateConst.AR2EN_ID.equals(modelId)) {
-            return batchResult.stream()
-                    .flatMap(batchData -> batchData.stream())
-                    .map(responseData -> responseData.getTgt())
-                    .collect(Collectors.toList());
-        }
-        // Seeing as ar2en using 2 models, here need to merge the result
-        List<String> transList = new ArrayList<>();
-
-        List<List<ResponseData>> casedResponseList = batchResult.subList(0, batchResult.size() / 2);
-        List<List<ResponseData>> uncasedResponseList = batchResult.subList(batchResult.size() / 2, batchResult.size());
-        for (int i = 0; i < casedResponseList.size(); i++) {
-            List<ResponseData> casedBatch = casedResponseList.get(i);
-            List<ResponseData> uncasedBatch = uncasedResponseList.get(i);
-            for (int j = 0; j < casedBatch.size(); j++) {
-                String casedResp = casedBatch.get(j).getTgt();
-                String uncasedResp = uncasedBatch.get(j).getTgt();
-                transList.add(getAr2EnTrans(casedResp, uncasedResp));
-            }
-        }
-        return transList;
+        return batchResult.stream()
+                .flatMap(batchData -> batchData.stream())
+                .map(responseData -> responseData.getTgt())
+                .collect(Collectors.toList());
     }
 
     private static String getAr2EnTrans(String casedResp, String uncasedResp) {
@@ -228,12 +211,7 @@ public class TranslateUtil {
         List<BatchSentence> batchSentenceList = new ArrayList<>();
         // If ar2en, use 2 models ar2en_cased, ar2en_uncased
         List<List<Sentence>> batchList = getBatchList(sentenceList);
-        if (TranslateConst.AR2EN_ID.equals(modelId)) {
-            batchSentenceList.add(new BatchSentence(TranslateConst.AR2EN_CASED, batchList));
-            batchSentenceList.add(new BatchSentence(TranslateConst.AR2EN_UNCASED, batchList));
-        } else {
-            batchSentenceList.add(new BatchSentence(modelId, batchList));
-        }
+        batchSentenceList.add(new BatchSentence(modelId, batchList));
         return batchSentenceList;
     }
 
