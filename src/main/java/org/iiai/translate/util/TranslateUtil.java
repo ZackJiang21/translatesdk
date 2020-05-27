@@ -50,8 +50,7 @@ public class TranslateUtil {
     private static final List<PostProcessor> POST_PROCESSORS = Arrays.asList(new SingleSentProcessor(),
             new ReplaceProcessor());
 
-    private static final List<PreProcessor> PRE_PROCESSORS = Arrays.asList(new CommaSplitProcessor(),
-            new AndSplitProcessor());
+    private static final List<PreProcessor> PRE_PROCESSORS = new ArrayList<>();
 
     private static final List<MergeProcessor> MERGE_PROCESSORS = Arrays.asList(new HtmlProcessor(),
             new PuncProcessor(),
